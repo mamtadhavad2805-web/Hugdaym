@@ -1,0 +1,477 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mec4tron's Hug Journey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&amp;family=Nunito:wght@400;700;900&amp;display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rose-gold': '#B76E79',
+                        'soft-pink': '#FFC1CC',
+                        'deep-red': '#C2185B',
+                        'cream': '#FFF0F5',
+                    },
+                    fontFamily: {
+                        'script': ['Dancing Script', 'cursive'],
+                        'body': ['Nunito', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'wiggle': 'wiggle 0.5s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Reset & Base */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling */
+            background: radial-gradient(circle at center, #FFF0F5 0%, #FFE4E1 100%);
+            touch-action: none; /* Disable default touch gestures */
+        }
+
+        /* Screen Management */
+        .screen-container {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            pointer-events: none;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .screen-container.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        .screen-container.exit {
+            opacity: 0;
+            transform: scale(1.1);
+            filter: blur(8px);
+        }
+
+        /* Interactive Elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px 0 rgba(183, 110, 121, 0.15);
+        }
+
+        .heart-trail {
+            position: fixed;
+            pointer-events: none;
+            font-size: 20px;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 9999;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+        }
+
+        /* Panda Button */
+        .panda-btn {
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 10px 40px rgba(183, 110, 121, 0.3);
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            z-index: 20;
+        }
+        .panda-btn:active { transform: scale(0.9); }
+        
+        .holding-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 4px solid #B76E79;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Progress Dots */
+        .progress-pill {
+            width: 12px;
+            height: 12px;
+            background: rgba(183, 110, 121, 0.2);
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .progress-pill.active {
+            background: #B76E79;
+            transform: scale(1.3);
+        }
+
+        /* Golden Ticket Shine */
+        .golden-ticket {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .golden-ticket:hover { transform: rotate(0deg) scale(1.02); }
+        .shimmer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%);
+            transform: skewX(-20deg) translateX(-150%);
+            transition: transform 0.5s;
+        }
+        .golden-ticket:hover .shimmer {
+            transform: skewX(-20deg) translateX(150%);
+            transition: transform 1s;
+        }
+
+        /* SVG Liquid Fill */
+        .liquid-fill {
+            transition: height 0.2s ease-out, y 0.2s ease-out;
+            fill: #C2185B;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.top-6{top:1.5rem}.z-50{z-index:50}.mx-4{margin-left:1rem;margin-right:1rem}.mx-auto{margin-left:auto;margin-right:auto}.mb-2{margin-bottom:0.5rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mt-10{margin-top:2.5rem}.mt-12{margin-top:3rem}.mt-2{margin-top:0.5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.flex{display:flex}.inline-flex{display:inline-flex}.h-1{height:0.25rem}.h-4{height:1rem}.h-48{height:12rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-64{height:16rem}.h-full{height:100%}.w-full{width:100%}.w-20{width:5rem}.w-4{width:1rem}.w-48{width:12rem}.w-5{width:1.25rem}.w-64{width:16rem}.max-w-md{max-width:28rem}.max-w-sm{max-width:24rem}.rotate-1{--tw-rotate:1deg;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.transform{transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes float{0%, 100%{transform:translateY(0)}50%{transform:translateY(-10px)}}.animate-float{animation:float 3s ease-in-out infinite}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.cursor-pointer{cursor:pointer}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-3{gap:0.75rem}.gap-2{gap:0.5rem}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.border-2{border-width:2px}.border-dashed{border-style:dashed}.border-yellow-400{--tw-border-opacity:1;border-color:rgb(250 204 21 / var(--tw-border-opacity, 1))}.border-yellow-600\/30{border-color:rgb(202 138 4 / 0.3)}.bg-rose-gold{--tw-bg-opacity:1;background-color:rgb(183 110 121 / var(--tw-bg-opacity, 1))}.bg-rose-gold\/30{background-color:rgb(183 110 121 / 0.3)}.bg-yellow-200\/50{background-color:rgb(254 240 138 / 0.5)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.from-yellow-100{--tw-gradient-from:#fef9c3 var(--tw-gradient-from-position);--tw-gradient-to:rgb(254 249 195 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-yellow-50{--tw-gradient-to:rgb(254 252 232 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #fefce8 var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-yellow-100{--tw-gradient-to:#fef9c3 var(--tw-gradient-to-position)}.p-4{padding:1rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-4{padding-left:1rem;padding-right:1rem}.px-8{padding-left:2rem;padding-right:2rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-4{padding-top:1rem;padding-bottom:1rem}.text-center{text-align:center}.font-body{font-family:Nunito, sans-serif}.font-script{font-family:Dancing Script, cursive}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-5xl{font-size:3rem;line-height:1}.text-6xl{font-size:3.75rem;line-height:1}.text-7xl{font-size:4.5rem;line-height:1}.text-\[10px\]{font-size:10px}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-black{font-weight:900}.font-bold{font-weight:700}.uppercase{text-transform:uppercase}.italic{font-style:italic}.leading-relaxed{line-height:1.625}.tracking-\[0\.3em\]{letter-spacing:0.3em}.tracking-tight{letter-spacing:-0.025em}.tracking-widest{letter-spacing:0.1em}.text-slate-800{--tw-text-opacity:1;color:rgb(30 41 59 / var(--tw-text-opacity, 1))}.text-deep-red{--tw-text-opacity:1;color:rgb(194 24 91 / var(--tw-text-opacity, 1))}.text-rose-gold{--tw-text-opacity:1;color:rgb(183 110 121 / var(--tw-text-opacity, 1))}.text-rose-gold\/60{color:rgb(183 110 121 / 0.6)}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105 / var(--tw-text-opacity, 1))}.text-slate-700{--tw-text-opacity:1;color:rgb(51 65 85 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-yellow-700{--tw-text-opacity:1;color:rgb(161 98 7 / var(--tw-text-opacity, 1))}.text-yellow-700\/80{color:rgb(161 98 7 / 0.8)}.text-yellow-800{--tw-text-opacity:1;color:rgb(133 77 14 / var(--tw-text-opacity, 1))}.underline{-webkit-text-decoration-line:underline;text-decoration-line:underline}.decoration-slate-300{-webkit-text-decoration-color:#cbd5e1;text-decoration-color:#cbd5e1}.opacity-0{opacity:0}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.drop-shadow-2xl{--tw-drop-shadow:drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.drop-shadow-md{--tw-drop-shadow:drop-shadow(0 4px 3px rgb(0 0 0 / 0.07)) drop-shadow(0 2px 2px rgb(0 0 0 / 0.06));filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.drop-shadow-sm{--tw-drop-shadow:drop-shadow(0 1px 1px rgb(0 0 0 / 0.05));filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-colors{transition-property:color, background-color, border-color, fill, stroke, -webkit-text-decoration-color;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, -webkit-text-decoration-color;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.delay-75{transition-delay:75ms}.duration-300{transition-duration:300ms}.hover\:scale-105:hover{--tw-scale-x:1.05;--tw-scale-y:1.05;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.hover\:text-deep-red:hover{--tw-text-opacity:1;color:rgb(194 24 91 / var(--tw-text-opacity, 1))}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@media (min-width: 768px){.md\:h-80{height:20rem}.md\:w-80{width:20rem}.md\:text-4xl{font-size:2.25rem;line-height:2.5rem}}</style></head>
+<body class="font-body text-slate-800">
+
+    <div class="fixed top-6 w-full flex justify-center gap-3 z-50">
+        <div class="progress-pill active" id="p0"></div>
+        <div class="progress-pill" id="p1"></div>
+        <div class="progress-pill" id="p2"></div>
+        <div class="progress-pill" id="p3"></div>
+        <div class="progress-pill" id="p4"></div>
+        <div class="progress-pill" id="p5"></div>
+    </div>
+
+   <audio id="bg-music" loop>
+    <source src="mymusic.mp3" type="audio/mpeg">
+</audio>
+
+    <div id="screen-0" class="screen-container active">
+        <div class="glass-panel p-8 rounded-3xl text-center max-w-md w-full animate-float">
+            <div class="text-6xl mb-4">💌</div>
+            <h1 class="font-script text-5xl text-rose-gold mb-2">Hey mahee...</h1>
+            <p class="text-slate-600 text-lg leading-relaxed mb-6 font-bold">
+                I know I'm not there to hug you today.<br>
+                So I made a little journey to send my love to you💝🫰
+            </p>
+            <button onclick="nextScreen(1)" class="w-full bg-rose-gold text-white font-bold py-4 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <span>Start Journey</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" aria-hidden="true" class="lucide lucide-arrow-right w-5 h-5"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </button>
+            <p class="text-xs text-rose-gold/60 mt-4 uppercase tracking-widest font-bold">Turn volume up 🔊</p>
+        </div>
+    </div>
+
+    <div id="screen-1" class="screen-container">
+        <h2 class="text-xs font-bold text-rose-gold tracking-[0.3em] uppercase mb-2">Step 1</h2>
+        <h3 class="font-script text-4xl text-deep-red mb-8">Send a Heartbeat</h3>
+        
+        <div class="relative w-64 h-64 md:w-80 md:h-80 cursor-pointer active:scale-95 transition-transform" onmousedown="handleTap()" ontouchstart="handleTap(event)">
+            <svg viewBox="0 0 512 512" class="w-full h-full drop-shadow-2xl">
+                <defs>
+                    <clipPath id="heart-clip">
+                        <path d="M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z"></path>
+                    </clipPath>
+                    <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#FF80AB;stop-opacity:1"></stop>
+                        <stop offset="100%" style="stop-color:#C2185B;stop-opacity:1"></stop>
+                    </linearGradient>
+                </defs>
+                <path d="M462.3 62.6C407.5 15.9 326 24.3 275.7 76.2L256 96.5l-19.7-20.3C186.1 24.3 104.5 15.9 49.7 62.6c-62.8 53.6-66.1 149.8-9.9 207.9l193.5 199.8c12.5 12.9 32.8 12.9 45.3 0l193.5-199.8c56.3-58.1 53-154.3-9.8-207.9z" fill="white" stroke="#FFC1CC" stroke-width="15"></path>
+                <rect id="liquid" x="0" y="512" width="512" height="0" fill="url(#liquidGradient)" clip-path="url(#heart-clip)" class="liquid-fill"></rect>
+            </svg>
+            
+            <div id="tap-percent" class="absolute inset-0 flex items-center justify-center font-bold text-white text-4xl pointer-events-none drop-shadow-md opacity-0">0%</div>
+        </div>
+        <p class="mt-8 text-slate-500 font-bold animate-pulse">Tap repeatedly to fill!</p>
+    </div>
+
+    <div id="screen-2" class="screen-container">
+        <div class="glass-panel p-8 rounded-3xl text-center max-w-md mx-4 animate-float">
+            <h3 class="font-script text-5xl text-rose-gold mb-4">"Dil Se Tight Hug💕"</h3>
+            <p class="text-xl text-slate-700 italic leading-relaxed">
+               ...my heart beats in sync with yours. Every single day.
+            </p>
+            <div class="mt-8 h-1 w-20 bg-rose-gold/30 mx-auto rounded-full"></div>
+            <button onclick="nextScreen(3)" class="mt-8 text-rose-gold font-bold hover:text-deep-red transition-colors flex items-center justify-center gap-2 w-full">
+                <span>Continue</span> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="arrow-right" aria-hidden="true" class="lucide lucide-arrow-right w-4 h-4"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="screen-3" class="screen-container">
+        <h2 class="text-xs font-bold text-rose-gold tracking-[0.3em] uppercase mb-2">Step 2</h2>
+        <h3 class="font-script text-4xl text-deep-red mb-8">The Long Hug</h3>
+        
+        <div class="relative w-64 h-64 flex items-center justify-center">
+            <div id="ring-1" class="holding-ring w-48 h-48 transition-all duration-300"></div>
+            <div id="ring-2" class="holding-ring w-48 h-48 transition-all duration-300 delay-75"></div>
+
+            <button id="panda-btn" class="panda-btn w-48 h-48 text-7xl flex items-center justify-center" onmousedown="startHold(event)" onmouseup="endHold()" ontouchstart="startHold(event)" ontouchend="endHold()" oncontextmenu="return false;">
+                🐼
+            </button>
+        </div>
+        
+        <p id="hold-text" class="mt-10 text-rose-gold font-bold h-6 transition-opacity opacity-0">Sending warmth...</p>
+        <p class="mt-2 text-slate-400 text-sm">Press &amp; Hold the Panda</p>
+    </div>
+
+    <div id="screen-4" class="screen-container">
+        <div class="glass-panel p-8 rounded-3xl text-center max-w-md mx-4 animate-float">
+            <h3 class="font-script text-5xl text-rose-gold mb-4">"Almost there..."</h3>
+            <p class="text-xl text-slate-700 italic leading-relaxed">
+                I have one special gift waiting for you. Just for you🎀
+            </p>
+            <button onclick="nextScreen(5)" class="mt-8 bg-rose-gold text-white font-bold py-3 px-8 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform">
+                Open Gift 🎁
+            </button>
+        </div>
+    </div>
+
+    <div id="screen-5" class="screen-container">
+        <h1 class="font-script text-6xl text-deep-red mb-2 drop-shadow-sm">Happy Hug Day!</h1>
+        <p class="text-slate-500 font-bold mb-8">Mission Accomplished.</p>
+
+        <div class="golden-ticket bg-gradient-to-br from-yellow-100 via-yellow-50 to-yellow-100 border-2 border-yellow-400 w-full max-w-sm rounded-2xl shadow-2xl p-6 mx-4 transform rotate-1">
+            <div class="shimmer"></div>
+            
+            <div class="border-2 border-dashed border-yellow-600/30 rounded-xl p-4 text-center">
+                <div class="flex justify-between text-[10px] font-bold text-yellow-700 uppercase tracking-widest mb-4">
+                    <span>tanish ❤️ mahee</span>
+                    <span>No. 001</span>
+                </div>
+                
+                <h2 class="text-3xl md:text-4xl font-black text-yellow-800 mb-2 font-body tracking-tight">INFINITE HUG PASS</h2>
+                <p class="text-yellow-700/80 text-sm font-bold mb-6 italic">Valid for the tightest, longest hugs imaginable.</p>
+                
+                <div class="inline-flex items-center gap-2 bg-yellow-200/50 px-4 py-2 rounded-full text-yellow-800 text-xs font-bold uppercase">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="infinity" aria-hidden="true" class="lucide lucide-infinity w-4 h-4"><path d="M6 16c5 0 7-8 12-8a4 4 0 0 1 0 8c-5 0-7-8-12-8a4 4 0 1 0 0 8"></path></svg>
+                    <span>Expires: Never</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-12 text-center opacity-0" style="animation: floatUp 1s ease-out 1s forwards;">
+            <p class="text-rose-gold font-script text-3xl">"I love you darling."</p>
+            <button onclick="location.reload()" class="mt-6 text-sm text-slate-400 underline decoration-slate-300">Replay Journey</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Audio Management
+        const music = document.getElementById('bg-music');
+        let musicStarted = false;
+
+        function startMusic() {
+            if (!musicStarted) {
+                music.volume = 0.5;
+                music.play().catch(() => console.log("User interaction needed"));
+                musicStarted = true;
+            }
+        }
+
+        // Screen Navigation
+        let currentScreen = 0;
+        function nextScreen(index) {
+            startMusic();
+            
+            // Haptic Feedback
+            if(navigator.vibrate) navigator.vibrate(50);
+
+            const prev = document.getElementById(`screen-${currentScreen}`);
+            const next = document.getElementById(`screen-${index}`);
+            
+            // UI Updates
+            prev.classList.add('exit');
+            prev.classList.remove('active');
+            
+            document.getElementById(`p${currentScreen}`).classList.remove('active');
+            document.getElementById(`p${index}`).classList.add('active');
+
+            setTimeout(() => {
+                next.classList.add('active');
+                currentScreen = index;
+                // Cleanup prev
+                setTimeout(() => prev.classList.remove('exit'), 500);
+            }, 500);
+        }
+
+        // INTERACTIVE CURSOR / TOUCH TRAIL
+        const colors = ['#FFC1CC', '#B76E79', '#C2185B'];
+        function createHeart(x, y) {
+            const el = document.createElement('div');
+            el.innerHTML = '❤️';
+            el.className = 'heart-trail';
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.color = colors[Math.floor(Math.random() * colors.length)];
+            el.style.fontSize = Math.random() * 20 + 10 + 'px';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if(Math.random() < 0.1) createHeart(e.clientX, e.clientY);
+        });
+        document.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            if(Math.random() < 0.1) createHeart(touch.clientX, touch.clientY);
+        });
+
+        // --- GAME 1: TAP HEART ---
+        let taps = 0;
+        function handleTap(e) {
+            if (e) e.preventDefault(); // Prevent double fire on touch
+            startMusic();
+            
+            if(taps >= 100) return;
+
+            taps += 8; // Speed of fill
+            if(taps > 100) taps = 100;
+
+            // Update Liquid
+            const height = 512 * (taps / 100);
+            const liquid = document.getElementById('liquid');
+            liquid.setAttribute('y', 512 - height);
+            liquid.setAttribute('height', height);
+
+            // Update Text
+            const text = document.getElementById('tap-percent');
+            text.innerText = Math.floor(taps) + '%';
+            text.style.opacity = '1';
+            text.style.transform = 'scale(1.5)';
+            setTimeout(() => text.style.transform = 'scale(1)', 100);
+
+            // Effects
+            if(navigator.vibrate) navigator.vibrate(30);
+            createHeart(window.innerWidth / 2, window.innerHeight / 2);
+
+            if(taps >= 100) {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#C2185B', '#FF80AB']
+                });
+                setTimeout(() => nextScreen(2), 1500);
+            }
+        }
+
+        // --- GAME 2: HOLD PANDA ---
+        let holdTimer;
+        let holdDuration = 0;
+        const pandaBtn = document.getElementById('panda-btn');
+        const ring1 = document.getElementById('ring-1');
+        const ring2 = document.getElementById('ring-2');
+        const holdText = document.getElementById('hold-text');
+
+        function startHold(e) {
+            if(e) e.preventDefault();
+            startMusic();
+            
+            pandaBtn.style.transform = "scale(0.9)";
+            holdText.style.opacity = '1';
+            
+            // Start Expanding Rings
+            ring1.style.width = "350px";
+            ring1.style.height = "350px";
+            ring1.style.opacity = "0.5";
+            
+            setTimeout(() => {
+                ring2.style.width = "400px";
+                ring2.style.height = "400px";
+                ring2.style.opacity = "0.3";
+            }, 200);
+
+            // Vibration loop
+            const vibInterval = setInterval(() => {
+                if(navigator.vibrate) navigator.vibrate(20);
+            }, 200);
+
+            holdTimer = setInterval(() => {
+                holdDuration++;
+                holdText.innerText = "Hugging" + ".".repeat((holdDuration % 3) + 1);
+
+                if(holdDuration > 25) { // Success condition
+                    clearInterval(holdTimer);
+                    clearInterval(vibInterval);
+                    completeHold();
+                }
+            }, 100);
+
+            // Store vibration interval to clear it later
+            pandaBtn.dataset.vib = vibInterval;
+        }
+
+        function endHold() {
+            clearInterval(holdTimer);
+            clearInterval(parseInt(pandaBtn.dataset.vib));
+            holdDuration = 0;
+            
+            // Reset Visuals
+            pandaBtn.style.transform = "scale(1)";
+            ring1.style.width = "192px"; ring1.style.height = "192px"; ring1.style.opacity = "0";
+            ring2.style.width = "192px"; ring2.style.height = "192px"; ring2.style.opacity = "0";
+            holdText.style.opacity = '0';
+        }
+
+        function completeHold() {
+            // Success
+            pandaBtn.style.transform = "scale(1.2)";
+            holdText.innerText = "Hug Delivered! ❤️";
+            holdText.style.color = "#C2185B";
+            
+            if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
+
+            // Remove listeners to prevent re-trigger
+            pandaBtn.onmousedown = null;
+            pandaBtn.ontouchstart = null;
+
+            setTimeout(() => nextScreen(4), 2000);
+        }
+
+    </script>
+
+</body></html>
